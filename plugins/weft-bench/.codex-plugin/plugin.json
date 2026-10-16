@@ -1,0 +1,18 @@
+{
+  "name": "weft-bench",
+  "version": "0.1.0",
+  "description": "Use Weft Bench to compare kernels with GGML and measure parameter-selected llama.cpp replacements.",
+  "skills": "./skills/",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "Weft Bench",
+    "shortDescription": "Weft 算子对比与 llama.cpp 替换计时",
+    "longDescription": "让 Weft 开发 agent 使用现有 bench：选择 GGML workload、输入和候选 kernel，复用固定 baseline，按参数替换 llama.cpp 入口并分别测量 prefill/decode。机器与模型配置保留在本地。",
+    "developerName": "Weft contributors",
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "用 Weft Bench 对比当前 kernel 与 GGML，复用已有 baseline。",
+      "用 Weft Bench 测量指定 llama.cpp 替换在 prefill 和 decode 中的效果。"
+    ]
+  }
+}

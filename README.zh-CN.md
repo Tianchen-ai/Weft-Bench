@@ -1,0 +1,49 @@
+# Weft Bench
+
+本工具只围绕两种工作：
+
+1. **Weft 算子 vs GGML**：选算子、选输入、传入 Weft 源码或产物，直接比较。
+2. **Weft 替换后的 llama.cpp vs 正常 llama.cpp**：选模型场景和替换映射，由工具准备 package 并运行。
+
+输入生成、输出分配、数值参考和计时都由已有 workload 与公共 worker 提供。
+更换同一算子的 Weft 实现，不需要写 C++ benchmark。SSH、机器路径和历史结果在外围。
+
+```sh
+python -m pip install -e .
+export WEFT_BENCH_CONFIG=/path/to/bench.local.json
+
+weft-bench list
+weft-bench list --kind inputs
+weft-bench show rms_norm --inputs decode
+
+weft-bench op q4_k_dot --target k1
+weft-bench op rms_norm --weft /work/norm.py:my_norm --inputs decode --target k1
+weft-bench op rms_norm --weft /work/artifact --inputs /work/input.json --save-outputs --target k1
+
+weft-bench list --kind replacements
+weft-bench e2e llama2-7b-q4_0 --target sg2044 \
+  --replace ggml.vec_dot/q4_0=/work/dot.py:my_dot --scenario default
+weft-bench e2e llama2-7b-q4_0 --target k1 \
+  --replace ggml.ime1/q4_centered_prefill=default --phase prefill
+```
+
+`op` 默认运行 GGML 和 Weft。两边使用同一份准备好的输入，各自持有输出，
+在同一个原生进程中使用公共计时器。可以仅运行 `--impl ggml` 或 `--impl weft`。
+已有固定成绩可用 `--baseline /path/to/results.json` 复用，默认只运行 Weft。
+
+输入独立选择：`default`、`decode`、`prefill`，或自定义 JSON/数组/文件。
+`show` 给出输入输出名称、dtype、shape 和 layout。JSON 结果记录同一约定，
+`--save-outputs` 额外保存两边的 Y，便于直接读取。
+
+模型替换通过 `--replace 角色=kernel` 或 `--replacement-file mappings.json` 指定。
+工具调用 Weft 的公共编译、Package.create 和 Package.link API，生成仅含指定映射的 package。
+替换入口目前固定为 vec-dot、activation quantization 和 packed IME。
+`--prefill`、`--decode`、`--depth`、`--threads` 调整预置场景。
+准备好的集成版本负责真正调用替换；结果显示测量窗口内是否命中。
+
+`check`、`checkpoint`、`explain` 和 `replay` 保留为外围开发便利功能。
+普通算子比较不需要先建立 checkpoint，也不会执行开发用的 tests 目录。
+
+详见：[快速开始](docs/quickstart.md) · [输入和实现接口](docs/extending.md) ·
+[环境配置](docs/targets.md) · [职责边界](docs/migration.md) ·
+[Codex 插件安装与使用](docs/codex-plugin.md)。

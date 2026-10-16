@@ -1,0 +1,6 @@
+interface:
+  display_name: "Weft Bench"
+  short_description: "比较 Weft 与 GGML 算子，测量 llama.cpp 替换和性能变化"
+  default_prompt: "使用 $benchmark 对比当前 Weft kernel 与 GGML，选择相关输入并复用已确认的 baseline。"
+policy:
+  allow_implicit_invocation: true
