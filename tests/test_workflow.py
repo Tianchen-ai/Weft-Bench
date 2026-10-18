@@ -153,9 +153,21 @@ class WorkflowTests(unittest.TestCase):
             "bindings": {},
             "shape_parameters": ["M", "N"],
             "arguments": [
-                {"name": "Input", "kind": "view", "strided": True, "shape": ["M", "N"]},
-                {"name": "scale", "kind": "scalar"},
-                {"name": "Out", "kind": "view", "strided": True, "shape": ["M", "N"]},
+                {
+                    "name": "Input", "kind": "view", "dtype": "f32",
+                    "access": "read", "c_type": "const float *",
+                    "encoding": "dense.f32", "strided": True, "shape": ["M", "N"],
+                },
+                {
+                    "name": "scale", "kind": "scalar", "dtype": "f32",
+                    "access": "none", "c_type": "float",
+                    "encoding": "", "strided": False, "shape": [],
+                },
+                {
+                    "name": "Out", "kind": "view", "dtype": "f32",
+                    "access": "write", "c_type": "float *",
+                    "encoding": "dense.f32", "strided": True, "shape": ["M", "N"],
+                },
             ],
         }
         call = bind_metadata(
@@ -165,7 +177,11 @@ class WorkflowTests(unittest.TestCase):
             {"scale": "2.0f"},
             {"Input": "X", "Out": "Y"},
         )
-        self.assertEqual(call, "another_name(x, 2.0f, y, 3, 7, 7, 1, 7, 1);")
+        self.assertEqual(
+            call,
+            "another_name(reinterpret_cast<const float *>(x), 2.0f, "
+            "reinterpret_cast<float *>(y), 3, 7, 7, 1, 7, 1);",
+        )
 
     def test_counter_windows_exclude_warmup(self):
         log = "\n".join(
